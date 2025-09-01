@@ -1,0 +1,83 @@
+class Commit:
+    """Represents a commit in Git"""
+    def __init__(self, message, parent=None):
+        self.message = message
+        self.parent = parent
+
+    def __repr__(self):
+        return f"Commit('{self.message}')"
+
+
+class Branch:
+    """Represents a Git branch"""
+    def __init__(self, name, head=None):
+        self.name = name
+        self.head = head  # Points to latest commit
+
+    def commit(self, message):
+        """Add a new commit on top of current branch"""
+        new_commit = Commit(message, self.head)
+        self.head = new_commit
+
+    def __repr__(self):
+        return f"Branch({self.name}, head={self.head})"
+
+
+class GitRepo:
+    """Simulates a Git repository with branches"""
+    def __init__(self):
+        initial_commit = Commit("Initial commit")
+        self.branches = {"main": Branch("main", initial_commit)}
+        self.current_branch = self.branches["main"]
+
+    def create_branch(self, name):
+        """Create a new branch pointing at current head"""
+        self.branches[name] = Branch(name, self.current_branch.head)
+
+    def checkout(self, name):
+        """Switch to an existing branch"""
+        if name in self.branches:
+            self.current_branch = self.branches[name]
+        else:
+            raise ValueError(f"Branch {name} does not exist!")
+
+    def commit(self, message):
+        """Commit changes to current branch"""
+        self.current_branch.commit(message)
+
+    def merge(self, source_branch_name):
+        """Merge another branch into the current branch"""
+        source_branch = self.branches[source_branch_name]
+        self.commit(f"Merge branch '{source_branch_name}' into {self.current_branch.name}")
+
+    def log(self, branch_name):
+        """Print commit history for a branch"""
+        commits = []
+        commit = self.branches[branch_name].head
+        while commit:
+            commits.append(commit.message)
+            commit = commit.parent
+        return commits[::-1]  # reverse order
+
+
+def main():
+    repo = GitRepo()
+
+    # Step 1: Create a new branch
+    repo.create_branch("birthday-party")
+    repo.checkout("birthday-party")
+
+    # Step 2: Add "birthday party page" (simulate commit)
+    repo.commit("Add birthday party page")
+
+    # Step 3: Merge feature branch back into main
+    repo.checkout("main")
+    repo.merge("birthday-party")
+
+    # Print logs
+    print("Main branch history:", repo.log("main"))
+    print("Birthday branch history:", repo.log("birthday-party"))
+
+
+if __name__ == "__main__":
+    main()
